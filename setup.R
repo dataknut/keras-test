@@ -5,10 +5,10 @@ pkgs <- c("keras", "lime", "tidyquant", "rsample", "recipes", "yardstick", "corr
 install.packages(pkgs)
 
 # Load libraries
-library(keras)
+library(keras3)
 
 # Install Keras if you have not installed before
-keras::install_keras()
+keras3::install_keras()
 
 # looks for Python & installs all sorts of stuff from tensorflow
 # including tensorflow which is big...
