@@ -60,3 +60,54 @@ dataframe_to_dataset <- function(df) {
 
 train_ds <- dataframe_to_dataset(train_df)
 val_ds <- dataframe_to_dataset(val_df)
+
+c(x, y) %<-% iter_next(as_iterator(train_ds))
+cat("Input: "); str(x)
+cat("Target: "); str(y)
+
+# create batches - why?
+train_ds <- train_ds |> dataset_batch(32)
+val_ds <- val_ds |> dataset_batch(32)
+
+# set up feature space
+# tells tensorflow how to handle each of the labels (variables)
+
+# breaks here
+
+feature_space <- layer_feature_space(
+  features = list(
+    # Categorical features encoded as integers # BA: coded as integer values
+    sex = "integer_categorical",
+    cp = "integer_categorical",
+    fbs = "integer_categorical",
+    restecg = "integer_categorical",
+    exang = "integer_categorical",
+    ca = "integer_categorical",
+    # Categorical feature encoded as string # BA: multiple strings
+    thal = "string_categorical",
+    # Numerical features to discretize # BA puts into bins
+    age = "float_discretized",
+    # Numerical features to normalize # BA: neural nets need normalised
+    trestbps = "float_normalized",
+    chol = "float_normalized",
+    thalach = "float_normalized",
+    oldpeak = "float_normalized",
+    slope = "float_normalized"
+  ),
+  # We create additional features by hashing
+  # value co-occurrences for the
+  # following groups of categorical features.
+  crosses = list(c("sex", "age"), c("thal", "ca")), # BA: sort of like interaction effects
+  # The hashing space for these co-occurrences
+  # will be 32-dimensional.
+  crossing_dim = 32,
+  # Our utility will one-hot encode all categorical
+  # features and concat all features into a single
+  # vector (one vector per sample).
+  output_mode = "concat"
+)
+
+train_ds_with_no_labels <- train_ds |> dataset_map(\(x, y) x)
+feature_space |> adapt(train_ds_with_no_labels)
+
+
