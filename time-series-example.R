@@ -25,12 +25,11 @@ get_data <- function(path) {
 
 root_url <- "https://raw.githubusercontent.com/hfawaz/cd-diagram/master/FordA/"
 
-# breaks here
 c(x_train, y_train) %<-% get_data(paste0(root_url, "FordA_TRAIN.tsv"))
 c(x_test, y_test) %<-% get_data(paste0(root_url, "FordA_TEST.tsv"))
 
 # test
-df <- get_data(paste0(root_url, "FordA_TRAIN.tsv"))
+#df <- get_data(paste0(root_url, "FordA_TRAIN.tsv"))
 
 str(keras3:::named_list(
   x_train, y_train,
