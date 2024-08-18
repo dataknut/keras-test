@@ -110,4 +110,64 @@ feature_space <- layer_feature_space(
 train_ds_with_no_labels <- train_ds |> dataset_map(\(x, y) x)
 feature_space |> adapt(train_ds_with_no_labels)
 
+preprocessed_train_ds <- train_ds |>
+  dataset_map(\(x, y) list(feature_space(x), y),
+              num_parallel_calls = tf$data$AUTOTUNE) |>
+  dataset_prefetch(tf$data$AUTOTUNE)
+
+preprocessed_val_ds <- val_ds |>
+  dataset_map(\(x, y) list(feature_space(x), y),
+              num_parallel_calls = tf$data$AUTOTUNE) |>
+  dataset_prefetch(tf$data$AUTOTUNE)
+
+
+dict_inputs <- feature_space$get_inputs()
+encoded_features <- feature_space$get_encoded_features()
+
+predictions <- encoded_features |>
+  layer_dense(32, activation="relu") |>
+  layer_dropout(0.5) |>
+  layer_dense(1, activation="sigmoid")
+
+training_model <- keras_model(inputs = encoded_features,
+                              outputs = predictions)
+training_model |> compile(optimizer = "adam",
+                          loss = "binary_crossentropy",
+                          metrics = "accuracy")
+
+inference_model <- keras_model(inputs = dict_inputs,
+                               outputs = predictions)
+
+
+training_model |> fit(
+  preprocessed_train_ds,
+  epochs = 20,
+  validation_data = preprocessed_val_ds,
+  verbose = 2
+)
+
+sample <- list(
+  age = 54,
+  sex = 1,
+  cp = 1,
+  trestbps = 145,
+  chol = 233,
+  fbs = 1,
+  restecg = 2,
+  thalach = 150,
+  exang = 0,
+  oldpeak = 2.3,
+  slope = 3,
+  ca = 0,
+  thal = "fixed"
+)
+
+input_dict <- lapply(sample, \(x) op_convert_to_tensor(array(x)))
+predictions <- inference_model |> predict(input_dict)
+
+glue::glue(r"---(
+  This particular patient had a {(100 * predictions) |> signif(3)}% probability
+  of having a heart disease, as evaluated by our model.
+)---")
+
 
